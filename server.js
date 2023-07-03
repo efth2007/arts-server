@@ -2,11 +2,14 @@ require("dotenv").config();
 const { v4: uuidv4 } = require('uuid')
 
 const express = require('express');
+const cors = require('cors')
+
 const pool = require('./db')
 
 const app = express();
 const port = process.env.PORT || 8000;
 
+app.use(cors())
 app.use(express.json())
 
 app.get("/", (req, res)=>{
@@ -142,7 +145,6 @@ app.delete('/artists/:id', async (req, res) => {
    } 
 })
 
-// app.use('/artists', routes)
 
 
 //Get all museums
@@ -166,6 +168,18 @@ app.get("/books", async (req, res) => {
               console.error(err)
           }
 })
+
+
+// Get book by id:
+app.get('/books/:id', async (req, res) => {
+  const { id } = req.params
+  try { 
+    const book = await pool.query('SELECT * FROM book WHERE id = $1', [id])
+    res.json(book.rows)
+  } catch(err){
+    console.error(err)
+  }
+} )
 
 // Create new:
 app.post("/books", async (req, res) => {
@@ -207,6 +221,59 @@ app.post("/books", async (req, res) => {
  })
  
  
+
+/* Artists - Books */
+
+// Get all:
+app.get("/bookArtists", async (req, res) => {
+  try {
+      const bookArtists = await pool.query('SELECT * FROM bookArtist')
+    
+      res.json(bookArtists.rows)
+        } catch (err) {
+            console.error(err)
+        }
+})
+
+
+// Create new:
+app.post("/bookArtists", async (req, res) => {
+   const { 
+    id_artist,
+    id_book
+    } = req.body;
+try { const newBookArtist = pool.query(`INSERT INTO bookArtist (
+  id_artist,
+  id_book
+   )
+   VALUES
+   (
+   $1,
+   $2)
+`,
+[
+  id_artist,
+  id_book 
+]);
+res.json("newBookArtist")
+}
+catch(err){
+ console.error("err")
+}
+})
+
+
+
+// Get books that include specific artist
+app.get('/books_with_artist/:id', async (req, res) => {
+  const { id } = req.params
+  try { 
+    const books = await pool.query('SELECT * FROM bookArtist WHERE id_artist = $1', [id])
+    res.json(books.rows)
+  } catch(err){
+    console.error(err)
+  }
+} )
 
 
 
